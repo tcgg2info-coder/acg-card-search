@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>ACGカード検索（非公式ファンサイト）</title>
+<style>
+  :root {
+    --bg: #f6f6f3;
+    --panel: #ffffff;
+    --text: #1f2328;
+    --muted: #666c75;
+    --line: #d9dbd6;
+    --accent: #2f6f5e;
+    --accent-soft: #e2efea;
+    --atk: #c0392b;
+    --def: #2458b3;
+    --kw-bg: #fff4d6;
+    --kw-text: #7a5300;
+    --notice-bg: #fff8e6;
+    --notice-line: #e8c96a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16181b; --panel: #1f2226; --text: #e7e9ec; --muted: #9aa1aa; --line: #343941;
+      --accent: #6cc3a8; --accent-soft: #23372f; --atk: #ff7b6e; --def: #7fa8ff;
+      --kw-bg: #3a3120; --kw-text: #f2cf7d; --notice-bg: #2b2718; --notice-line: #6b5a24;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16181b; --panel: #1f2226; --text: #e7e9ec; --muted: #9aa1aa; --line: #343941;
+    --accent: #6cc3a8; --accent-soft: #23372f; --atk: #ff7b6e; --def: #7fa8ff;
+    --kw-bg: #3a3120; --kw-text: #f2cf7d; --notice-bg: #2b2718; --notice-line: #6b5a24;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", Meiryo, sans-serif;
+    font-size: 15px; line-height: 1.6;
+  }
+  a { color: var(--accent); }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+  header { border-bottom: 1px solid var(--line); background: var(--panel); }
+  header .wrap { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding-top: 14px; padding-bottom: 14px; }
+  h1 { font-size: 20px; margin: 0; }
+  .badge { font-size: 12px; border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; color: var(--muted); }
+  .notice {
+    margin: 16px 0; padding: 10px 14px; background: var(--notice-bg);
+    border: 1px solid var(--notice-line); border-radius: 6px; font-size: 13px;
+  }
+  .notice strong { display: block; }
+  form.search {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 16px;
+  }
+  .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .field.wide { grid-column: 1 / -1; }
+  .field > label, .field > .label { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .num { font-weight: 700; color: var(--accent); margin-right: 2px; }
+  input[type=text], input[type=number], select {
+    width: 100%; font: inherit; color: var(--text); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px;
+  }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .range { display: flex; align-items: center; gap: 6px; }
+  .range input { width: 0; flex: 1; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { position: relative; }
+  .chip input { position: absolute; opacity: 0; pointer-events: none; }
+  .chip span {
+    display: inline-block; padding: 2px 10px; border: 1px solid var(--line); border-radius: 999px;
+    background: var(--bg); cursor: pointer; font-size: 13px; user-select: none;
+  }
+  .chip input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+  .chip input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .sub { display: flex; gap: 12px; align-items: center; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+  .adv { grid-column: 1 / -1; }
+  .adv-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 16px; }
+  .adv summary {
+    cursor: pointer; font-weight: 600; padding: 8px 12px; border: 1px solid var(--line);
+    border-radius: 6px; background: var(--bg); list-style: none; display: flex; align-items: center; gap: 8px;
+  }
+  .adv summary::-webkit-details-marker { display: none; }
+  .adv summary::before { content: "▸"; color: var(--accent); transition: transform .15s; }
+  .adv[open] summary::before { transform: rotate(90deg); }
+  .adv[open] summary { margin-bottom: 12px; }
+  .adv-count { font-size: 12px; font-weight: 600; color: var(--panel); background: var(--accent); border-radius: 999px; padding: 0 8px; }
+  .adv-count:empty { display: none; }
+  /* PCでは常に展開し、開閉ボタンは出さない */
+  @media (min-width: 641px) {
+    .adv summary { display: none; }
+  }
+  .actions { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  button {
+    font: inherit; border: 1px solid var(--line); background: var(--bg); color: var(--text);
+    border-radius: 6px; padding: 6px 14px; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  .count { font-weight: 600; margin: 16px 0 8px; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .count select { width: auto; }
+  .results { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+  .card .ruby { font-size: 12px; color: var(--muted); }
+  .card .name { font-size: 17px; font-weight: 700; margin: 0; }
+  .card .no { font-weight: 400; color: var(--muted); font-size: 14px; }
+  .stats { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 6px 0; font-size: 14px; }
+  .stats span { white-space: nowrap; }
+  .atk { color: var(--atk); font-weight: 700; }
+  .def { color: var(--def); font-weight: 700; }
+  .effect { white-space: pre-wrap; margin: 6px 0; font-size: 14px; overflow-wrap: anywhere; }
+  .kw { background: var(--kw-bg); color: var(--kw-text); border-radius: 3px; padding: 0 2px; }
+  mark { background: #ffe066; color: #1f2328; padding: 0; }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 13px; color: var(--muted); }
+  .tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .tag { font-size: 12px; background: var(--kw-bg); color: var(--kw-text); border: none; border-radius: 999px; padding: 1px 8px; cursor: pointer; }
+  .more { display: block; margin: 0 auto 24px; }
+  .more[hidden] { display: none; }
+  footer { border-top: 1px solid var(--line); background: var(--panel); font-size: 13px; color: var(--muted); }
+  footer .wrap { padding-top: 16px; padding-bottom: 24px; }
+  footer ul { margin: 6px 0; padding-left: 1.3em; }
+  .theme-btn { margin-left: auto; font-size: 12px; padding: 2px 10px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>ACGカード検索</h1>
+    <span class="badge">非公式ファンサイト</span>
+    <button type="button" class="theme-btn" id="themeBtn">表示: 自動</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="notice" role="note">
+    <strong>本サイトは有志による非公式のファンサイトであり、アニマルカードゲームの公式運営元とは一切関係ありません。</strong>
+    カード情報は<a href="https://acgtcg.com/" target="_blank" rel="noopener">公式サイト</a>のカードリストを元にしています。正確な情報・カード画像は必ず公式サイトでご確認ください。
+  </div>
+
+  <form class="search" id="form" autocomplete="off" onsubmit="return false">
+    <div class="field">
+      <label for="q-name"><span class="num">①</span>カード名（よみがな可）</label>
+      <input type="text" id="q-name" placeholder="例: クロコダイル / くろこ">
+    </div>
+    <div class="field">
+      <label for="q-effect"><span class="num">②</span>効果テキスト</label>
+      <input type="text" id="q-effect" placeholder="例: 墓地 手札（スペース区切りでAND）">
+    </div>
+    <details class="adv" id="adv" open>
+    <summary>詳細条件<span class="adv-count" id="adv-count"></span></summary>
+    <div class="adv-body">
+    <div class="field wide">
+      <div class="label"><span class="num">②</span>効果キーワード《》</div>
+      <div class="chips" id="kw-chips"></div>
+      <div class="sub">
+        <label><input type="radio" name="kwmode" value="and" checked> すべて含む（AND）</label>
+        <label><input type="radio" name="kwmode" value="or"> いずれかを含む（OR）</label>
+      </div>
+    </div>
+    <div class="field">
+      <div class="label"><span class="num">③</span>コスト</div>
+      <div class="range">
+        <input type="number" id="cost-min" min="0" placeholder="下限" aria-label="コスト下限">〜
+        <input type="number" id="cost-max" min="0" placeholder="上限" aria-label="コスト上限">
+      </div>
+    </div>
+    <div class="field">
+      <div class="label"><span class="num">④</span>条件（選んだ記号をすべて含む）</div>
+      <div class="chips" id="cond-chips"></div>
+      <input type="text" id="q-cond" placeholder="文字列で指定 例: 水水" aria-label="条件の文字列">
+    </div>
+    <div class="field">
+      <div class="label"><span class="num">⑤</span>タイプ（いずれか）</div>
+      <div class="chips" id="type-chips"></div>
+    </div>
+    <div class="field">
+      <label for="q-tribe"><span class="num">⑥</span>種属</label>
+      <input type="text" id="q-tribe" list="tribe-list" placeholder="例: ワニ">
+      <datalist id="tribe-list"></datalist>
+    </div>
+    <div class="field">
+      <div class="label"><span class="num">⑦</span>ATK</div>
+      <div class="range">
+        <input type="number" id="atk-min" placeholder="下限" aria-label="ATK下限">〜
+        <input type="number" id="atk-max" placeholder="上限" aria-label="ATK上限">
+      </div>
+    </div>
+    <div class="field">
+      <div class="label"><span class="num">⑧</span>DEF</div>
+      <div class="range">
+        <input type="number" id="def-min" placeholder="下限" aria-label="DEF下限">〜
+        <input type="number" id="def-max" placeholder="上限" aria-label="DEF上限">
+      </div>
+    </div>
+    <div class="field wide">
+      <div class="label">収録（いずれか）</div>
+      <div class="chips" id="set-chips"></div>
+    </div>
+    </div>
+    </details>
+    <div class="actions">
+      <button type="button" id="reset">条件をクリア</button>
+    </div>
+  </form>
+
+  <div class="count">
+    <span id="count" aria-live="polite"></span>
+    <label>並び順
+      <select id="sort">
+        <option value="no">カード番号順</option>
+        <option value="cost">コスト順</option>
+        <option value="atk">ATK順（高い順）</option>
+        <option value="def">DEF順（高い順）</option>
+        <option value="ruby">名前順（五十音）</option>
+      </select>
+    </label>
+  </div>
+  <div class="results" id="results"></div>
+  <button type="button" class="more" id="more" hidden>さらに表示</button>
+</main>
+
+<footer>
+  <div class="wrap">
+    <strong>運営方針</strong>
+    <ul>
+      <li>本サイトは非公式のファンサイトであり、アニマルカードゲームの公式運営元とは一切関係ありません。</li>
+      <li>営利目的の利用は一切ありません。広告、アフィリエイト、有料機能、寄付・支援の受付は行わず、運営費用は個人で負担しています。</li>
+      <li>公式ロゴや、公式と誤認される名称・デザインは使用していません。</li>
+      <li>権利者様から削除・修正のご依頼があった場合は、速やかに対応いたします。</li>
+    </ul>
+    <p><strong>お問い合わせ・削除/修正のご依頼</strong><br>
+      X（旧Twitter）：<a href="https://x.com/tcgg2_info" target="_blank" rel="noopener">@tcgg2_info</a> までDMまたはリプライでご連絡ください。</p>
+    <p>カード名・効果テキスト等の著作権は各権利者に帰属します。カード画像は本サイトには掲載しておらず、各カードの「画像（公式）」リンクから公式サイトでご覧いただけます。</p>
+  </div>
+</footer>
+
+<script src="cards.js"></script>
+<script>
+(() => {
+  const OFFICIAL = "https://acgtcg.com/";
+  const CARDS = window.ACG_CARDS || [];
+  const PAGE = 50;
+  const $ = (id) => document.getElementById(id);
+
+  // ---- テーマ切替（閲覧者ごとの設定のみ保存） ----
+  const themes = ["auto", "light", "dark"];
+  const themeLabel = { auto: "自動", light: "ライト", dark: "ダーク" };
+  let theme = "auto";
+  try { theme = localStorage.getItem("acg-theme") || "auto"; } catch (e) {}
+  const applyTheme = () => {
+    if (theme === "auto") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", theme);
+    $("themeBtn").textContent = "表示: " + themeLabel[theme];
+  };
+  $("themeBtn").onclick = () => {
+    theme = themes[(themes.indexOf(theme) + 1) % themes.length];
+    try { localStorage.setItem("acg-theme", theme); } catch (e) {}
+    applyTheme();
+  };
+  applyTheme();
+
+  // ---- 検索用の正規化（カタカナ→ひらがな、全角英数→半角、小文字化） ----
+  const norm = (s) => (s || "")
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+    .replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60))
+    .toLowerCase();
+  CARDS.forEach((c) => {
+    c._name = norm(c.name + " " + c.ruby + " " + c.no);
+    c._effect = norm(c.effect);
+    c._types = c.type.split("&");
+  });
+
+  // ---- 選択肢の生成 ----
+  const uniq = (arr) => [...new Set(arr)];
+  const countBy = (arr) => arr.reduce((m, k) => (m[k] = (m[k] || 0) + 1, m), {});
+  const chip = (group, value, label) =>
+    `<label class="chip"><input type="checkbox" name="${group}" value="${esc(value)}"><span>${esc(label)}</span></label>`;
+
+  const kwCount = countBy(CARDS.flatMap((c) => c.keywords));
+  const kws = Object.keys(kwCount).sort((a, b) => kwCount[b] - kwCount[a]);
+  $("kw-chips").innerHTML = kws.map((k) => chip("kw", k, `${k} (${kwCount[k]})`)).join("");
+
+  const condSymbols = ["平", "山", "水", "森", "夜", "無"];
+  $("cond-chips").innerHTML = condSymbols.map((s) => chip("cond", s, s)).join("");
+
+  const typeCount = countBy(CARDS.flatMap((c) => c._types));
+  $("type-chips").innerHTML = Object.keys(typeCount)
+    .sort((a, b) => typeCount[b] - typeCount[a])
+    .map((t) => chip("type", t, t)).join("");
+
+  $("tribe-list").innerHTML = uniq(CARDS.map((c) => c.tribe).filter(Boolean))
+    .sort((a, b) => a.localeCompare(b, "ja"))
+    .map((t) => `<option value="${esc(t)}">`).join("");
+
+  const sets = uniq(CARDS.map((c) => c.set + "\t" + c.setName)).map((s) => s.split("\t"));
+  $("set-chips").innerHTML = sets.map(([code, name]) => chip("set", code, `${name}（${code}）`)).join("");
+
+  // ---- 絞り込み ----
+  const checked = (name) => [...document.querySelectorAll(`input[name=${name}]:checked`)].map((i) => i.value);
+  const numVal = (id) => { const v = $(id).value.trim(); return v === "" ? null : Number(v); };
+  const inRange = (v, min, max) => {
+    if (min === null && max === null) return true;
+    if (typeof v !== "number") return false;
+    return (min === null || v >= min) && (max === null || v <= max);
+  };
+  const terms = (s) => norm(s).split(/[\s　]+/).filter(Boolean);
+
+  function filter() {
+    const qName = terms($("q-name").value);
+    const qEffect = terms($("q-effect").value);
+    const kwSel = checked("kw");
+    const kwAnd = document.querySelector("input[name=kwmode]:checked").value === "and";
+    const condSel = checked("cond");
+    const condText = $("q-cond").value.trim();
+    const typeSel = checked("type");
+    const tribe = norm($("q-tribe").value.trim());
+    const setSel = checked("set");
+    const cost = [numVal("cost-min"), numVal("cost-max")];
+    const atk = [numVal("atk-min"), numVal("atk-max")];
+    const def = [numVal("def-min"), numVal("def-max")];
+
+    return CARDS.filter((c) =>
+      qName.every((t) => c._name.includes(t)) &&
+      qEffect.every((t) => c._effect.includes(t)) &&
+      (kwSel.length === 0 || (kwAnd ? kwSel.every((k) => c.keywords.includes(k)) : kwSel.some((k) => c.keywords.includes(k)))) &&
+      condSel.every((s) => c.cond.includes(s)) &&
+      (!condText || c.cond.includes(condText)) &&
+      (typeSel.length === 0 || typeSel.some((t) => c._types.includes(t))) &&
+      (!tribe || norm(c.tribe).includes(tribe)) &&
+      (setSel.length === 0 || setSel.includes(c.set)) &&
+      inRange(c.cost, ...cost) && inRange(c.atk, ...atk) && inRange(c.def, ...def)
+    );
+  }
+
+  const byNo = (a, b) => CARDS.indexOf(a) - CARDS.indexOf(b);
+  const desc = (k) => (a, b) => (typeof b[k] === "number" ? b[k] : -1) - (typeof a[k] === "number" ? a[k] : -1) || byNo(a, b);
+  const sorters = {
+    no: byNo,
+    cost: (a, b) => (a.cost ?? 99) - (b.cost ?? 99) || byNo(a, b),
+    atk: desc("atk"),
+    def: desc("def"),
+    ruby: (a, b) => a.ruby.localeCompare(b.ruby, "ja") || byNo(a, b),
+  };
+
+  // ---- 描画 ----
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+  // 検索語のハイライト（ひらがな/カタカナを区別せずに一致位置を探す）
+  function highlight(raw, qs) {
+    const n = norm(raw);
+    const marks = new Array(raw.length).fill(false);
+    qs.forEach((q) => {
+      let i = n.indexOf(q);
+      while (q && i !== -1) { for (let j = i; j < i + q.length; j++) marks[j] = true; i = n.indexOf(q, i + q.length); }
+    });
+    let out = "", open = false;
+    for (let i = 0; i < raw.length; i++) {
+      if (marks[i] && !open) { out += "<mark>"; open = true; }
+      if (!marks[i] && open) { out += "</mark>"; open = false; }
+      out += esc(raw[i]);
+    }
+    return open ? out + "</mark>" : out;
+  }
+  const renderEffect = (text, qs) =>
+    highlight(text, qs).replace(/《([^《》]*?)》/g, '<span class="kw">《$1》</span>');
+
+  let current = [], shown = 0;
+
+  function cardHtml(c, qName, qEffect) {
+    const stats = [
+      `<span>［コスト：${c.cost ?? "−"}］</span>`,
+      `<span>［条件：${esc(c.cond || "−")}］</span>`,
+      `<span>［タイプ：${esc(c.type || "−")}］</span>`,
+      `<span>［種属：${esc(c.tribe || "−")}］</span>`,
+    ];
+    if (c.atk !== null || c.def !== null)
+      stats.push(`<span>［<span class="atk">ATK ${c.atk ?? "−"}</span>／<span class="def">DEF ${c.def ?? "−"}</span>］</span>`);
+    return `<article class="card">
+      <div class="ruby">${highlight(c.ruby, qName)}</div>
+      <h2 class="name">${highlight(c.name, qName)} <span class="no">（${highlight(c.no, qName)}）</span></h2>
+      <div class="stats">${stats.join("")}</div>
+      <div class="effect">${renderEffect(c.effect, qEffect) || '<span style="color:var(--muted)">（効果なし）</span>'}</div>
+      <div class="meta">
+        ${c.keywords.length ? `<span class="tags">${c.keywords.map((k) => `<button type="button" class="tag" data-kw="${esc(k)}" title="このキーワードで絞り込む">${esc(k)}</button>`).join("")}</span>` : ""}
+        <span>収録: ${esc(c.setName)}</span>
+        <a href="${OFFICIAL}img/${encodeURIComponent(c.img)}" target="_blank" rel="noopener">画像（公式）↗</a>
+        <a href="${OFFICIAL}cardlist_${c.set}.html" target="_blank" rel="noopener">公式カードリスト↗</a>
+      </div>
+    </article>`;
+  }
+
+  function renderMore() {
+    const qName = terms($("q-name").value);
+    const qEffect = terms($("q-effect").value);
+    const next = current.slice(shown, shown + PAGE);
+    $("results").insertAdjacentHTML("beforeend", next.map((c) => cardHtml(c, qName, qEffect)).join(""));
+    shown += next.length;
+    $("more").hidden = shown >= current.length;
+    $("more").textContent = `さらに表示（残り ${current.length - shown} 件）`;
+  }
+
+  // ---- 詳細条件の折りたたみ（スマホのみ閉じた状態で開始） ----
+  const mobile = window.matchMedia("(max-width: 640px)");
+  const syncAdv = () => { $("adv").open = !mobile.matches; };
+  syncAdv();
+  mobile.addEventListener("change", syncAdv);
+
+  // 閉じていても指定中の条件があるとわかるよう、項目数をバッジで表示する
+  function countAdvanced() {
+    const adv = $("adv");
+    const groups = new Set();
+    adv.querySelectorAll("input").forEach((i) => {
+      if ((i.type === "checkbox" && i.checked) || ((i.type === "text" || i.type === "number") && i.value.trim())) {
+        groups.add(i.closest(".field"));
+      }
+    });
+    $("adv-count").textContent = groups.size ? `${groups.size}項目を指定中` : "";
+  }
+
+  function update() {
+    countAdvanced();
+    current = filter().sort(sorters[$("sort").value]);
+    shown = 0;
+    $("results").innerHTML = current.length ? "" : '<p>該当するカードはありません。</p>';
+    $("count").textContent = `${current.length} 件 / 全 ${CARDS.length} 件`;
+    renderMore();
+  }
+
+  let timer;
+  const debounced = () => { clearTimeout(timer); timer = setTimeout(update, 120); };
+  $("form").addEventListener("input", debounced);
+  $("form").addEventListener("change", debounced);
+  $("sort").addEventListener("change", update);
+  $("more").addEventListener("click", renderMore);
+  $("reset").addEventListener("click", () => { $("form").reset(); update(); });
+  $("results").addEventListener("click", (e) => {
+    const kw = e.target.closest(".tag")?.dataset.kw;
+    if (!kw) return;
+    const box = document.querySelector(`input[name=kw][value="${CSS.escape(kw)}"]`);
+    if (box && !box.checked) { box.checked = true; update(); }
+    $("adv").open = true;
+    $("form").scrollIntoView({ behavior: "smooth" });
+  });
+
+  update();
+})();
+</script>
+</body>
+</html>
