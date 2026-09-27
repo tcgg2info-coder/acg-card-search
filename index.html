@@ -199,7 +199,7 @@
     </div>
     </details>
     <div class="actions">
-      <button type="button" id="reset">条件をクリア</button>
+      <button type="button" id="clear-btn">条件をクリア</button>
     </div>
   </form>
 
@@ -433,7 +433,8 @@
   $("form").addEventListener("change", debounced);
   $("sort").addEventListener("change", update);
   $("more").addEventListener("click", renderMore);
-  $("reset").addEventListener("click", () => { $("form").reset(); update(); });
+  // 注意: フォーム内の要素に id="reset" などを付けると form.reset() が上書きされて動かなくなる
+  $("clear-btn").addEventListener("click", () => { $("form").reset(); update(); });
   $("results").addEventListener("click", (e) => {
     const kw = e.target.closest(".tag")?.dataset.kw;
     if (!kw) return;
