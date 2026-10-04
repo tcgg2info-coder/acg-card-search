@@ -115,6 +115,7 @@
   .results { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
   .card .ruby { font-size: 12px; color: var(--muted); }
+  .card .manual { color: var(--muted); }
   .card .name { font-size: 17px; font-weight: 700; margin: 0; }
   .card .no { font-weight: 400; color: var(--muted); font-size: 14px; }
   .stats { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 6px 0; font-size: 14px; }
@@ -147,7 +148,8 @@
 <main class="wrap">
   <div class="notice" role="note">
     <strong>本サイトは有志による非公式のファンサイトであり、アニマルカードゲームの公式運営元とは一切関係ありません。</strong>
-    カード情報は<a href="https://acgtcg.com/" target="_blank" rel="noopener">公式サイト</a>のカードリストを元にしています。正確な情報・カード画像は必ず公式サイトでご確認ください。
+    カード情報は<a href="https://acgtcg.com/" target="_blank" rel="noopener">公式サイト</a>のカードリストを元にしています。正確な情報・カード画像は必ず公式サイトでご確認ください。<br>
+    「※画像から文字起こし」と表示されるカードは、公式のテキスト版カードリストが未公開のため、公式のカード画像から文字起こししたものです（ふりがなは推定）。誤りが含まれる可能性があります。
   </div>
 
   <form class="search" id="form" autocomplete="off" onsubmit="return false">
@@ -397,8 +399,11 @@
       <div class="meta">
         ${c.keywords.length ? `<span class="tags">${c.keywords.map((k) => `<button type="button" class="tag" data-kw="${esc(k)}" title="このキーワードで絞り込む">${esc(k)}</button>`).join("")}</span>` : ""}
         <span>収録: ${esc(c.setName)}</span>
+        ${c.manual ? '<span class="manual" title="公式のテキスト版カードリストが未公開のため、カード画像から文字起こししています。ふりがなは推定です。">※画像から文字起こし（誤りの可能性あり）</span>' : ""}
         <a href="${OFFICIAL}img/${encodeURIComponent(c.img)}" target="_blank" rel="noopener">画像（公式）↗</a>
-        <a href="${OFFICIAL}cardlist_${c.set}.html" target="_blank" rel="noopener">公式カードリスト↗</a>
+        ${c.page
+          ? `<a href="${OFFICIAL}${esc(c.page)}" target="_blank" rel="noopener">公式商品ページ↗</a>`
+          : `<a href="${OFFICIAL}cardlist_${c.set}.html" target="_blank" rel="noopener">公式カードリスト↗</a>`}
       </div>
     </article>`;
   }
