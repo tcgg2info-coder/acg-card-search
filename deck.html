@@ -113,7 +113,13 @@
   .pill.ng { background: var(--ng-bg); border-color: var(--atk); color: var(--atk); }
   .issues { margin: 6px 0 0; padding-left: 1.3em; font-size: 13px; }
   .issues { max-height: 6.6em; overflow: auto; }
-  @media (max-width: 860px) { .issues { max-height: 3.4em; } }
+  /* スマホでは警告を1行にたたみ、カードを追加しても下の内容が上下にずれないようにする（PCは常に展開） */
+  .iss summary { display: none; cursor: pointer; font-size: 13px; font-weight: 600; margin-top: 6px; color: var(--accent); }
+  .iss summary.error { color: var(--atk); }
+  @media (max-width: 860px) {
+    .iss summary { display: block; }
+    .pills .pc-only { display: none; }
+  }
   .issues:empty { display: none; }
   .issues .error { color: var(--atk); }
   .issues .note { color: var(--muted); }
@@ -129,6 +135,9 @@
     .cols { grid-template-columns: minmax(0, 1fr); }
     .pane-deck { position: static; max-height: none; }
     body[data-tab=search] .pane-deck, body[data-tab=deck] .pane-search { display: none; }
+    /* スマホではカード名の下の行に、枚数表示と追加ボタンを右寄せで並べる */
+    .card .top { flex-direction: column; align-items: stretch; }
+    .card .add { margin-left: 0; justify-content: flex-end; }
   }
 
   /* ---- カードを探す ---- */
@@ -136,14 +145,15 @@
   .count { font-weight: 600; margin: 12px 0 8px; }
   .results { display: flex; flex-direction: column; gap: 8px; }
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
-  .card .top { display: flex; gap: 8px 12px; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; }
-  .card .name { font-size: 16px; font-weight: 700; margin: 0; }
+  .card .top { display: flex; gap: 6px 12px; align-items: flex-start; }
+  .card .name { font-size: 16px; font-weight: 700; margin: 0; flex: 1; min-width: 0; }
   .card .no { font-weight: 400; color: var(--muted); font-size: 13px; }
-  .card .add { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-left: auto; }
+  /* 枚数表示は常に同じ幅で出し、追加ボタンを押しても改行やボタンの位置ずれが起きないようにする */
+  .card .add { display: flex; gap: 6px; align-items: center; flex: none; margin-left: auto; }
   .card .add button { padding: 3px 10px; font-size: 13px; white-space: nowrap; }
-  .have { font-size: 12px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+  .have { font-size: 12px; font-weight: 600; color: var(--accent); white-space: nowrap; min-width: 6.5em; text-align: right; }
+  .have.zero { color: var(--muted); font-weight: 400; }
   .have.over { color: var(--atk); }
-  .have:empty { display: none; }
   .stats { display: flex; flex-wrap: wrap; gap: 2px 10px; margin: 4px 0 0; font-size: 13px; }
   .stats span { white-space: nowrap; }
   .atk { color: var(--atk); font-weight: 700; }
@@ -251,7 +261,10 @@
 
   <section class="summary" aria-label="枚数とルールチェック" aria-live="polite">
     <div class="pills" id="pills"></div>
-    <ul class="issues" id="issues"></ul>
+    <details class="iss" id="iss" open>
+      <summary id="iss-sum"></summary>
+      <ul class="issues" id="issues"></ul>
+    </details>
   </section>
 
   <div class="tabs" role="tablist">
@@ -599,7 +612,10 @@
   function renderSummary(v) {
     $("pills").innerHTML = ZONES.map((z) =>
       `<span class="pill ${v.ok[z.key] ? "ok" : "ng"}">${z.short} ${v.counts[z.key]}枚<span class="rule">（${z.rule}）</span></span>`).join("") +
-      (v.ok.all ? '<span class="pill ok">構築ルール OK</span>' : "");
+      (v.ok.all ? '<span class="pill ok pc-only">構築ルール OK</span>' : "");
+    const errs = v.issues.filter((i) => i.level === "error").length, notes = v.issues.length - errs;
+    $("iss-sum").textContent = errs ? `⚠ 構築ルール違反 ${errs}件（タップで内容を表示）` : notes ? `構築ルール OK（補足 ${notes}件）` : "構築ルール OK";
+    $("iss-sum").classList.toggle("error", errs > 0);
     $("issues").innerHTML = v.issues.map((i) => `<li class="${i.level}">${esc(i.text)}</li>`).join("");
     $("tab-deck").textContent = `デッキ内容（${ZONES.map((z) => v.counts[z.key]).join("/")}）`;
   }
@@ -608,7 +624,8 @@
     document.querySelectorAll(".have").forEach((el) => {
       const n = v.totals.get(el.dataset.name) || 0;
       const basic = el.dataset.basic === "1";
-      el.textContent = n ? (basic ? `デッキ内 ${n}枚` : `同名 ${n}/${NAME_MAX}枚`) : "";
+      el.textContent = basic ? `デッキ内 ${n}枚` : `同名 ${n}/${NAME_MAX}枚`;
+      el.classList.toggle("zero", n === 0);
       el.classList.toggle("over", !basic && n > NAME_MAX);
     });
   }
@@ -725,6 +742,12 @@
     const b = e.target.closest("button[data-d]");
     if (b) change(b.dataset.zone, b.dataset.no, Number(b.dataset.d));
   });
+
+  // ---- 警告の折りたたみ（スマホのみ閉じた状態で開始） ----
+  const narrow = window.matchMedia("(max-width: 860px)");
+  const syncIssues = () => { $("iss").open = !narrow.matches; };
+  syncIssues();
+  narrow.addEventListener("change", syncIssues);
 
   // ---- スマホ用のタブ切替 ----
   function setTab(tab) {
