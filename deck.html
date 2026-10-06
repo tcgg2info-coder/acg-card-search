@@ -1,0 +1,1030 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>ACGデッキ作成（非公式ファンサイト）</title>
+<meta name="description" content="アニマルカードゲームのデッキ（基礎デッキ・領土デッキ・予備デッキ）を作成し、QRコードや画像で共有できる非公式ファンサイトです。">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:site_name" content="ACGカード検索（非公式ファンサイト）">
+<meta property="og:title" content="ACGデッキ作成（非公式ファンサイト）">
+<meta property="og:description" content="アニマルカードゲームのデッキを作成し、QRコードや画像で共有できます。無料・広告なし・スマホ対応。">
+<meta property="og:url" content="https://tcgg2info-coder.github.io/acg-card-search/deck.html">
+<meta property="og:image" content="https://tcgg2info-coder.github.io/acg-card-search/ogp.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root {
+    --bg: #f6f6f3;
+    --panel: #ffffff;
+    --text: #1f2328;
+    --muted: #666c75;
+    --line: #d9dbd6;
+    --accent: #2f6f5e;
+    --accent-soft: #e2efea;
+    --atk: #c0392b;
+    --def: #2458b3;
+    --kw-bg: #fff4d6;
+    --kw-text: #7a5300;
+    --notice-bg: #fff8e6;
+    --notice-line: #e8c96a;
+    --ng-bg: #fdecea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16181b; --panel: #1f2226; --text: #e7e9ec; --muted: #9aa1aa; --line: #343941;
+      --accent: #6cc3a8; --accent-soft: #23372f; --atk: #ff7b6e; --def: #7fa8ff;
+      --kw-bg: #3a3120; --kw-text: #f2cf7d; --notice-bg: #2b2718; --notice-line: #6b5a24;
+      --ng-bg: #3a2220;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16181b; --panel: #1f2226; --text: #e7e9ec; --muted: #9aa1aa; --line: #343941;
+    --accent: #6cc3a8; --accent-soft: #23372f; --atk: #ff7b6e; --def: #7fa8ff;
+    --kw-bg: #3a3120; --kw-text: #f2cf7d; --notice-bg: #2b2718; --notice-line: #6b5a24;
+    --ng-bg: #3a2220;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", Meiryo, sans-serif;
+    font-size: 15px; line-height: 1.6;
+  }
+  a { color: var(--accent); }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+  header { border-bottom: 1px solid var(--line); background: var(--panel); }
+  header .wrap { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding-top: 14px; padding-bottom: 14px; }
+  h1 { font-size: 20px; margin: 0; }
+  .badge { font-size: 12px; border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; color: var(--muted); }
+  .nav { display: flex; gap: 4px; font-size: 14px; }
+  .nav a { padding: 2px 10px; border-radius: 999px; text-decoration: none; }
+  .nav a[aria-current] { background: var(--accent); color: var(--panel); font-weight: 600; }
+  .notice {
+    margin: 16px 0; padding: 10px 14px; background: var(--notice-bg);
+    border: 1px solid var(--notice-line); border-radius: 6px; font-size: 13px;
+  }
+  .notice strong { display: block; }
+  .notice[hidden] { display: none; }
+  .notice button { margin-top: 8px; }
+  .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .field.wide { grid-column: 1 / -1; }
+  .field > label, .field > .label { font-size: 13px; font-weight: 600; color: var(--muted); }
+  input[type=text], input[type=number], select {
+    width: 100%; font: inherit; color: var(--text); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px;
+  }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .range { display: flex; align-items: center; gap: 6px; }
+  .range input { width: 0; flex: 1; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { position: relative; }
+  .chip input { position: absolute; opacity: 0; pointer-events: none; }
+  .chip span {
+    display: inline-block; padding: 2px 10px; border: 1px solid var(--line); border-radius: 999px;
+    background: var(--bg); cursor: pointer; font-size: 13px; user-select: none;
+  }
+  .chip input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+  .chip input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button {
+    font: inherit; border: 1px solid var(--line); background: var(--bg); color: var(--text);
+    border-radius: 6px; padding: 6px 14px; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--panel); font-weight: 600; }
+  .theme-btn { margin-left: auto; font-size: 12px; padding: 2px 10px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+
+  /* ---- デッキの選択・管理 ---- */
+  .deckbar { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 16px; margin-bottom: 12px; }
+  .deckbar .actions { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .deckbar .hint { grid-column: 1 / -1; margin: 0; font-size: 12px; color: var(--muted); }
+  .deckbar .actions .label { font-size: 13px; font-weight: 600; color: var(--muted); }
+
+  /* ---- 枚数とルールチェック（スクロールしても見えるよう上部に固定） ---- */
+  .summary {
+    position: sticky; top: 0; z-index: 5; margin-bottom: 12px; padding: 8px 14px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+  .pill { font-size: 13px; font-weight: 600; border-radius: 999px; padding: 1px 10px; border: 1px solid var(--line); white-space: nowrap; }
+  .pill .rule { font-weight: 400; }
+  .pill.ok { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .pill.ng { background: var(--ng-bg); border-color: var(--atk); color: var(--atk); }
+  .issues { margin: 6px 0 0; padding-left: 1.3em; font-size: 13px; }
+  .issues { max-height: 6.6em; overflow: auto; }
+  @media (max-width: 860px) { .issues { max-height: 3.4em; } }
+  .issues:empty { display: none; }
+  .issues .error { color: var(--atk); }
+  .issues .note { color: var(--muted); }
+
+  .tabs { display: none; gap: 6px; margin-bottom: 12px; }
+  .tabs button { flex: 1; }
+  .tabs button[aria-selected=true] { background: var(--accent); border-color: var(--accent); color: var(--panel); font-weight: 600; }
+
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; margin-bottom: 24px; }
+  .pane-deck { position: sticky; top: calc(var(--sum-h, 84px) + 12px); max-height: calc(100vh - var(--sum-h, 84px) - 24px); overflow: auto; }
+  @media (max-width: 860px) {
+    .tabs { display: flex; }
+    .cols { grid-template-columns: minmax(0, 1fr); }
+    .pane-deck { position: static; max-height: none; }
+    body[data-tab=search] .pane-deck, body[data-tab=deck] .pane-search { display: none; }
+  }
+
+  /* ---- カードを探す ---- */
+  form.search { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 16px; }
+  .count { font-weight: 600; margin: 12px 0 8px; }
+  .results { display: flex; flex-direction: column; gap: 8px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .card .top { display: flex; gap: 8px 12px; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; }
+  .card .name { font-size: 16px; font-weight: 700; margin: 0; }
+  .card .no { font-weight: 400; color: var(--muted); font-size: 13px; }
+  .card .add { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-left: auto; }
+  .card .add button { padding: 3px 10px; font-size: 13px; white-space: nowrap; }
+  .have { font-size: 12px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+  .have.over { color: var(--atk); }
+  .have:empty { display: none; }
+  .stats { display: flex; flex-wrap: wrap; gap: 2px 10px; margin: 4px 0 0; font-size: 13px; }
+  .stats span { white-space: nowrap; }
+  .atk { color: var(--atk); font-weight: 700; }
+  .def { color: var(--def); font-weight: 700; }
+  .eff summary { cursor: pointer; font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .effect { white-space: pre-wrap; margin: 4px 0; font-size: 14px; overflow-wrap: anywhere; }
+  .kw { background: var(--kw-bg); color: var(--kw-text); border-radius: 3px; padding: 0 2px; }
+  .more { display: block; margin: 12px auto 0; }
+  .more[hidden] { display: none; }
+
+  /* ---- デッキ内容 ---- */
+  .zone + .zone { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .zone h2 { font-size: 15px; margin: 0 0 6px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .zone .rule { font-size: 12px; font-weight: 400; color: var(--muted); }
+  .zone .empty { font-size: 13px; color: var(--muted); margin: 0; }
+  .tgroup { font-size: 13px; margin: 10px 0 2px; padding: 1px 8px; background: var(--accent-soft); color: var(--accent); border-radius: 4px; display: flex; justify-content: space-between; }
+  .tgroup span { font-weight: 400; }
+  .zone h2 + .tgroup { margin-top: 0; }
+  .drow { display: flex; align-items: center; gap: 6px; padding: 3px 0; border-bottom: 1px dashed var(--line); }
+  .drow:last-child { border-bottom: none; }
+  .drow .q { width: 2.2em; text-align: right; font-weight: 700; flex: none; }
+  .drow .dn { flex: 1; min-width: 0; font-size: 14px; line-height: 1.35; overflow-wrap: anywhere; }
+  .drow .dn small { display: block; color: var(--muted); font-size: 12px; }
+  .drow.bad .dn, .drow.bad .q { color: var(--atk); }
+  .drow button { flex: none; width: 30px; height: 30px; padding: 0; font-weight: 700; }
+
+  /* ---- 共有ダイアログ ---- */
+  dialog { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); padding: 16px; width: min(560px, calc(100vw - 24px)); }
+  dialog::backdrop { background: rgba(0, 0, 0, .5); }
+  dialog h2 { font-size: 17px; margin: 0 0 4px; }
+  dialog h3 { font-size: 14px; margin: 16px 0 6px; }
+  dialog p { font-size: 13px; color: var(--muted); margin: 4px 0; }
+  .qr-box { text-align: center; }
+  /* QRコードは読み取りやすいよう、テーマに関係なく白地に黒で表示する */
+  #qr { background: #fff; max-width: 100%; height: auto; image-rendering: pixelated; border-radius: 4px; }
+  .copy-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .copy-row input { flex: 1; width: auto; min-width: 140px; }
+  [hidden] { display: none !important; }
+  .copy-row button { white-space: nowrap; }
+  #share-img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+  .dlg-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-top: 14px; }
+  a.btn { display: inline-block; text-decoration: none; border: 1px solid var(--accent); background: var(--accent); color: var(--panel); border-radius: 6px; padding: 6px 14px; font-weight: 600; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 20;
+    background: var(--text); color: var(--bg); border-radius: 999px; padding: 6px 16px; font-size: 13px;
+    max-width: calc(100vw - 32px); opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .toast.show { opacity: .95; }
+
+  footer { border-top: 1px solid var(--line); background: var(--panel); font-size: 13px; color: var(--muted); }
+  footer .wrap { padding-top: 16px; padding-bottom: 24px; }
+  footer ul { margin: 6px 0; padding-left: 1.3em; }
+</style>
+</head>
+<body data-tab="search">
+<header>
+  <div class="wrap">
+    <h1>ACGデッキ作成</h1>
+    <span class="badge">非公式ファンサイト</span>
+    <nav class="nav" aria-label="ページ切替">
+      <a href="index.html">カード検索</a>
+      <a href="deck.html" aria-current="page">デッキ作成</a>
+    </nav>
+    <button type="button" class="theme-btn" id="themeBtn">表示: 自動</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="notice" role="note">
+    <strong>本サイトは有志による非公式のファンサイトであり、アニマルカードゲームの公式運営元とは一切関係ありません。</strong>
+    デッキの構築ルールは公式の総合ルール（502〜504）を元にチェックしています。大会などで使用する際は、必ず<a href="https://acgtcg.com/" target="_blank" rel="noopener">公式サイト</a>の最新ルールをご確認ください。
+  </div>
+  <div class="notice" id="storage-warn" hidden>このブラウザではデッキを保存できません（プライベートブラウズ中、または保存領域が無効・満杯です）。ページを閉じるとデッキは消えるため、QRコードや画像で控えてください。</div>
+
+  <div class="notice" id="inapp-warn" hidden>
+    <strong>アプリ内のブラウザで開いています。</strong>
+    このままではデッキがアプリの中だけに保存され、画像やファイルの保存もできないことがあります。メニューから「Safariで開く」「ブラウザで開く」などを選ぶか、URLをコピーして Safari や Chrome に貼り付けて開いてください。
+    <div><button type="button" id="inapp-copy">このページのURLをコピー</button></div>
+  </div>
+
+  <section class="panel deckbar" aria-label="デッキの選択">
+    <div class="field">
+      <label for="deck-select">編集するデッキ</label>
+      <select id="deck-select"></select>
+    </div>
+    <div class="field">
+      <label for="deck-name">デッキ名</label>
+      <input type="text" id="deck-name" maxlength="30" placeholder="デッキ名を入力" autocomplete="off">
+    </div>
+    <div class="actions">
+      <button type="button" id="new-btn">新規作成</button>
+      <button type="button" id="copy-btn">複製</button>
+      <button type="button" id="del-btn">削除</button>
+      <button type="button" class="primary" id="share-btn">共有（QRコード・画像）</button>
+    </div>
+    <div class="actions">
+      <span class="label">バックアップ</span>
+      <button type="button" id="export-btn">全デッキをファイルに書き出す</button>
+      <button type="button" id="import-btn">ファイルから読み込む</button>
+      <input type="file" id="import-file" accept=".json,application/json" hidden>
+    </div>
+    <p class="hint">デッキは自動で、この端末のブラウザ内に保存されます（サーバーには送信されません）。ブラウザのデータを消去したときや、長期間このサイトを開かなかったときに消えることがあるため、大事なデッキは画像・URL・ファイルで控えてください。別の端末やブラウザへは、QRコード・URL・ファイルで移せます。<span id="ios-hint" hidden><br>iPhone・iPadでは、Safariの共有メニューから「ホーム画面に追加」して、そのアイコンから開いて使うとデッキが消えにくくなります（Safariで作成済みのデッキは引き継がれないため、URLやファイルで移してください）。</span></p>
+  </section>
+
+  <section class="summary" aria-label="枚数とルールチェック" aria-live="polite">
+    <div class="pills" id="pills"></div>
+    <ul class="issues" id="issues"></ul>
+  </section>
+
+  <div class="tabs" role="tablist">
+    <button type="button" role="tab" id="tab-search" data-tab="search">カードを探す</button>
+    <button type="button" role="tab" id="tab-deck" data-tab="deck">デッキ内容</button>
+  </div>
+
+  <div class="cols">
+    <section class="pane-search" aria-label="カードを探す">
+      <form class="panel search" id="form" autocomplete="off" onsubmit="return false">
+        <div class="field">
+          <label for="q-name">カード名（よみがな可）</label>
+          <input type="text" id="q-name" placeholder="例: クロコダイル / くろこ">
+        </div>
+        <div class="field">
+          <label for="q-effect">効果テキスト</label>
+          <input type="text" id="q-effect" placeholder="例: 墓地 手札（スペース区切りでAND）">
+        </div>
+        <div class="field wide">
+          <div class="label">タイプ（いずれか）</div>
+          <div class="chips" id="type-chips"></div>
+        </div>
+        <div class="field">
+          <div class="label">条件（選んだ記号をすべて含む）</div>
+          <div class="chips" id="cond-chips"></div>
+        </div>
+        <div class="field">
+          <div class="label">コスト</div>
+          <div class="range">
+            <input type="number" id="cost-min" min="0" placeholder="下限" aria-label="コスト下限">〜
+            <input type="number" id="cost-max" min="0" placeholder="上限" aria-label="コスト上限">
+          </div>
+        </div>
+        <div class="field">
+          <label for="q-tribe">種属</label>
+          <input type="text" id="q-tribe" list="tribe-list" placeholder="例: ワニ">
+          <datalist id="tribe-list"></datalist>
+        </div>
+        <div class="field wide">
+          <div class="label">収録（いずれか）</div>
+          <div class="chips" id="set-chips"></div>
+        </div>
+        <div class="field wide">
+          <div><button type="button" id="clear-btn">条件をクリア</button></div>
+        </div>
+      </form>
+      <div class="count" id="count" aria-live="polite"></div>
+      <div class="results" id="results"></div>
+      <button type="button" class="more" id="more" hidden>さらに表示</button>
+    </section>
+
+    <section class="panel pane-deck" id="deck-pane" aria-label="デッキ内容"></section>
+  </div>
+</main>
+
+<dialog id="share" aria-labelledby="share-title">
+  <h2 id="share-title">デッキを共有</h2>
+  <p>QRコードを読み取るか、URLを開くと、このデッキが相手のブラウザに読み込まれます。</p>
+  <h3>QRコード</h3>
+  <div class="qr-box"><canvas id="qr" width="10" height="10" aria-label="デッキのQRコード"></canvas></div>
+  <p id="qr-error" hidden>デッキの内容が多すぎるため、QRコードを作成できませんでした。URLまたは画像で共有してください。</p>
+  <div class="copy-row">
+    <input type="text" id="share-url" readonly aria-label="共有URL">
+    <button type="button" id="url-copy">URLをコピー</button>
+    <button type="button" id="url-share" hidden>URLを共有</button>
+  </div>
+  <h3>デッキリスト画像</h3>
+  <p>カード名の一覧とQRコードをまとめた画像です（カード画像は含みません）。<span id="img-hint" hidden>「画像を共有」から、写真への保存やSNS・メッセージアプリへの送信ができます。</span></p>
+  <img id="share-img" alt="デッキリスト画像のプレビュー">
+  <div class="dlg-actions">
+    <button type="button" class="primary" id="img-share" hidden>画像を共有</button>
+    <a class="btn" id="img-save" download="deck.png">画像を保存</a>
+    <button type="button" id="share-close">閉じる</button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<footer>
+  <div class="wrap">
+    <strong>運営方針</strong>
+    <ul>
+      <li>本サイトは非公式のファンサイトであり、アニマルカードゲームの公式運営元とは一切関係ありません。</li>
+      <li>営利目的の利用は一切ありません。広告、アフィリエイト、有料機能、寄付・支援の受付は行わず、運営費用は個人で負担しています。</li>
+      <li>公式ロゴや、公式と誤認される名称・デザインは使用していません。</li>
+      <li>権利者様から削除・修正のご依頼があった場合は、速やかに対応いたします。</li>
+    </ul>
+    <p><strong>お問い合わせ・削除/修正のご依頼</strong><br>
+      X（旧Twitter）：<a href="https://x.com/tcgg2_info" target="_blank" rel="noopener">@tcgg2_info</a> までDMまたはリプライでご連絡ください。</p>
+    <p>カード名・効果テキスト等の著作権は各権利者に帰属します。カード画像は本サイトには掲載しておらず、各カードの「画像（公式）」リンクから公式サイトでご覧いただけます。作成したデッキはお使いのブラウザ内にのみ保存され、サーバーには送信されません。</p>
+  </div>
+</footer>
+
+<script src="cards.js"></script>
+<script src="qrcode.js"></script>
+<script>
+(() => {
+  const OFFICIAL = "https://acgtcg.com/";
+  const PUBLIC_URL = "https://tcgg2info-coder.github.io/acg-card-search/deck.html";
+  const CARDS = window.ACG_CARDS || [];
+  const PAGE = 30;
+  const STORE_KEY = "acg-decks";
+  const $ = (id) => document.getElementById(id);
+
+  // ---- テーマ切替（閲覧者ごとの設定のみ保存） ----
+  const themes = ["auto", "light", "dark"];
+  const themeLabel = { auto: "自動", light: "ライト", dark: "ダーク" };
+  let theme = "auto";
+  try { theme = localStorage.getItem("acg-theme") || "auto"; } catch (e) {}
+  const applyTheme = () => {
+    if (theme === "auto") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", theme);
+    $("themeBtn").textContent = "表示: " + themeLabel[theme];
+  };
+  $("themeBtn").onclick = () => {
+    theme = themes[(themes.indexOf(theme) + 1) % themes.length];
+    try { localStorage.setItem("acg-theme", theme); } catch (e) {}
+    applyTheme();
+  };
+  applyTheme();
+
+  // ---- デッキ構築ルール（公式総合ルール 502〜504） ----
+  const MAIN_TYPES = ["動物", "縄張り", "道具", "場面", "特技"];
+  const TYPE_ORDER = [...MAIN_TYPES, "領土"];
+  const MAIN_MIN = 40, TERR_SIZE = 10, SIDE_MAX = 15, NAME_MAX = 4;
+  const ZONES = [
+    { key: "main", label: "基礎デッキ", short: "基礎", rule: `${MAIN_MIN}枚以上` },
+    { key: "terr", label: "領土デッキ", short: "領土", rule: `${TERR_SIZE}枚ちょうど` },
+    { key: "side", label: "予備デッキ", short: "予備", rule: `${SIDE_MAX}枚以下` },
+  ];
+
+  // ---- 検索用の正規化（カタカナ→ひらがな、全角英数→半角、小文字化） ----
+  const norm = (s) => (s || "")
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+    .replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60))
+    .toLowerCase();
+  const BY_NO = new Map();
+  CARDS.forEach((c, i) => {
+    c._i = i;
+    c._name = norm(c.name + " " + c.ruby + " " + c.no);
+    c._effect = norm(c.effect);
+    c._types = c.type.split("&");
+    c._terr = c._types.includes("領土");
+    // 種属『基礎』の領土カードは同名4枚制限の対象外（503.3a / 504.4a）
+    c._basic = c._terr && c.tribe === "基礎";
+    BY_NO.set(c.no, c);
+  });
+  // 「動物&道具」のような複合タイプも、基礎デッキに入れられるカードとして扱う
+  const allowed = (c, zone) =>
+    zone === "terr" ? c._terr :
+    zone === "main" ? !c._terr && c._types.every((t) => MAIN_TYPES.includes(t)) :
+    true;
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  // ---- 端末・ブラウザの判定 ----
+  const UA = navigator.userAgent;
+  const IOS = /iPhone|iPad|iPod/.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1);
+  // ホーム画面に追加したアイコンから開いているか
+  const STANDALONE = navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
+  // X・LINE・Instagram・Facebook などのアプリ内ブラウザ（保存場所が Safari / Chrome と別になる）
+  const IN_APP = /Line\/|FBAN|FBAV|FB_IAB|Instagram|Twitter|MicroMessenger|; wv\)/.test(UA);
+  async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); return; } catch (e) {}
+    const t = document.createElement("textarea");
+    t.value = text; document.body.appendChild(t); t.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    t.remove();
+  }
+
+  // ---- 保存（複数デッキをこのブラウザの localStorage に保持） ----
+  let store = { decks: [], current: null };
+  let storageOk = true;
+  const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const emptyDeck = (name) => ({ id: newId(), name, main: {}, terr: {}, side: {}, updated: Date.now() });
+  // 保存データや共有URLは外部から来る値なので、形を確かめてから使う
+  function cleanZone(z) {
+    const out = {};
+    if (!z || typeof z !== "object") return out;
+    Object.keys(z).slice(0, 300).forEach((no) => {
+      const n = Math.floor(Number(z[no]));
+      if (/^[A-Za-z0-9-]{1,16}$/.test(no) && n >= 1) out[no] = Math.min(n, 99);
+    });
+    return out;
+  }
+  const cleanDeck = (d) => ({
+    id: typeof d.id === "string" && d.id ? d.id : newId(),
+    name: String(d.name ?? "").slice(0, 30),
+    main: cleanZone(d.main), terr: cleanZone(d.terr), side: cleanZone(d.side),
+    updated: Number(d.updated) || Date.now(),
+  });
+  function load() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+      if (raw && Array.isArray(raw.decks)) {
+        store.decks = raw.decks.filter((d) => d && typeof d === "object").map(cleanDeck);
+        store.current = raw.current;
+      }
+    } catch (e) {}
+    if (!store.decks.length) store.decks.push(emptyDeck("新しいデッキ"));
+    if (!store.decks.some((d) => d.id === store.current)) store.current = store.decks[0].id;
+  }
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); storageOk = true; }
+    catch (e) { storageOk = false; }
+    $("storage-warn").hidden = storageOk;
+  }
+  const deck = () => store.decks.find((d) => d.id === store.current);
+  const deckLabel = (d) => d.name.trim() || "（名前なし）";
+  const zoneCount = (d, zone) => Object.values(d[zone]).reduce((a, b) => a + b, 0);
+
+  // ---- 共有URL（#n=デッキ名&m=基礎&t=領土&s=予備） ----
+  // QRコードを細かくしすぎないよう、カード番号は「接頭辞.枚数.3桁の番号を連結」にまとめて短くする。
+  //   例: ACG-001×4, ACG-002×4, BP1-010×2 → ACG.4.001002_BP1.2.010
+  // この形に当てはまらない番号は「!番号.枚数」でそのまま入れる。
+  const encZone = (z) => {
+    const groups = new Map(), raw = [];
+    Object.keys(z).sort().forEach((no) => {
+      const m = /^([A-Za-z0-9]+)-(\d{3})$/.exec(no);
+      if (!m) { raw.push(`!${no}.${z[no]}`); return; }
+      const key = `${m[1]}.${z[no]}`;
+      groups.set(key, (groups.get(key) || "") + m[2]);
+    });
+    return [...groups].map(([k, nums]) => `${k}.${nums}`).concat(raw).join("_");
+  };
+  const decZone = (s) => {
+    const z = {};
+    const put = (no, n) => { z[no] = (z[no] || 0) + Number(n); };
+    (s || "").split("_").forEach((g) => {
+      let m;
+      if ((m = /^!([A-Za-z0-9-]+)\.(\d{1,2})$/.exec(g))) put(m[1], m[2]);
+      else if ((m = /^([A-Za-z0-9]+)\.(\d{1,2})\.((?:\d{3})+)$/.exec(g)))
+        m[3].match(/\d{3}/g).forEach((num) => put(`${m[1]}-${num}`, m[2]));
+    });
+    return z;
+  };
+  function shareUrl(d) {
+    const base = location.protocol.startsWith("http") ? location.origin + location.pathname : PUBLIC_URL;
+    return `${base}#n=${encodeURIComponent(d.name.trim())}&m=${encZone(d.main)}&t=${encZone(d.terr)}&s=${encZone(d.side)}`;
+  }
+  const sameDeck = (a, b) => a.name.trim() === b.name.trim() && ZONES.every((z) => encZone(a[z.key]) === encZone(b[z.key]));
+  function importFromHash() {
+    if (!/^#(.*&)?[mts]=/.test(location.hash)) return;
+    const p = new URLSearchParams(location.hash.slice(1));
+    const d = cleanDeck({ name: p.get("n") || "共有されたデッキ", main: decZone(p.get("m")), terr: decZone(p.get("t")), side: decZone(p.get("s")) });
+    // アプリ内ブラウザでは、そのまま Safari / Chrome で開き直せるようにURLのデッキ情報を残す
+    if (!IN_APP) history.replaceState(null, "", location.pathname + location.search);
+    if (!ZONES.some((z) => zoneCount(d, z.key))) return;
+    const same = store.decks.find((x) => sameDeck(x, d));
+    if (same) { store.current = same.id; return "共有されたデッキは保存済みです。"; }
+    // 作りかけの空デッキしかない場合は、それを置き換える
+    if (store.decks.length === 1 && !ZONES.some((z) => zoneCount(store.decks[0], z.key))) store.decks = [];
+    store.decks.push(d);
+    store.current = d.id;
+    return `共有されたデッキ「${deckLabel(d)}」を読み込み、保存しました。`;
+  }
+
+  // ---- ルールチェック（違反していても追加は止めず、警告として表示する） ----
+  function nameTotals(d) {
+    const totals = new Map();
+    ZONES.forEach((z) => Object.entries(d[z.key]).forEach(([no, n]) => {
+      const c = BY_NO.get(no);
+      if (c) totals.set(c.name, (totals.get(c.name) || 0) + n);
+    }));
+    return totals;
+  }
+  function validate(d) {
+    const counts = Object.fromEntries(ZONES.map((z) => [z.key, zoneCount(d, z.key)]));
+    const issues = [];
+    const err = (text) => issues.push({ level: "error", text });
+    if (counts.main < MAIN_MIN) err(`基礎デッキは${MAIN_MIN}枚以上必要です（あと${MAIN_MIN - counts.main}枚）。`);
+    if (counts.terr < TERR_SIZE) err(`領土デッキは${TERR_SIZE}枚ちょうど必要です（あと${TERR_SIZE - counts.terr}枚）。`);
+    if (counts.terr > TERR_SIZE) err(`領土デッキは${TERR_SIZE}枚ちょうど必要です（${counts.terr - TERR_SIZE}枚多い）。`);
+    if (counts.side > SIDE_MAX) err(`予備デッキは${SIDE_MAX}枚以下にする必要があります（${counts.side - SIDE_MAX}枚多い）。`);
+
+    const totals = nameTotals(d);
+    const over = new Set();
+    const basic = new Set(CARDS.filter((c) => c._basic).map((c) => c.name));
+    totals.forEach((n, name) => {
+      if (n > NAME_MAX && !basic.has(name)) {
+        over.add(name);
+        err(`「${name}」が合計${n}枚入っています（同じカード名は基礎・領土・予備デッキの合計で${NAME_MAX}枚まで）。`);
+      }
+    });
+    const misplaced = new Set();
+    ZONES.forEach((z) => Object.keys(d[z.key]).forEach((no) => {
+      const c = BY_NO.get(no);
+      if (!c) { misplaced.add(z.key + no); err(`${z.label}に、カードデータにないカード（${no}）が入っています。`); }
+      else if (!allowed(c, z.key)) { misplaced.add(z.key + no); err(`「${c.name}」（${c.type}カード）は${z.label}に入れられません。`); }
+    }));
+    if (counts.side > 0 && counts.side < SIDE_MAX)
+      issues.push({ level: "note", text: `予備デッキは${SIDE_MAX}枚が推奨です。競技レベルのイベントでは${SIDE_MAX}枚ちょうどか0枚にする必要があります。` });
+
+    const ok = {
+      main: counts.main >= MAIN_MIN, terr: counts.terr === TERR_SIZE, side: counts.side <= SIDE_MAX,
+      all: !issues.some((i) => i.level === "error"),
+    };
+    return { counts, issues, totals, over, misplaced, ok };
+  }
+
+  // ---- デッキ内容の描画 ----
+  const sortKey = (c) => [TYPE_ORDER.indexOf(c._types[0]), c.cost ?? 99, c._i];
+  function entries(d, zone) {
+    return Object.entries(d[zone])
+      .map(([no, n]) => ({ no, n, c: BY_NO.get(no) }))
+      .sort((a, b) => {
+        if (!a.c || !b.c) return (a.c ? 0 : 1) - (b.c ? 0 : 1) || a.no.localeCompare(b.no);
+        const ka = sortKey(a.c), kb = sortKey(b.c);
+        return ka[0] - kb[0] || ka[1] - kb[1] || ka[2] - kb[2];
+      });
+  }
+  function renderDeck(v) {
+    const d = deck();
+    $("deck-pane").innerHTML = ZONES.map((z) => {
+      const es = entries(d, z.key);
+      // 基礎デッキはタイプ別（動物・縄張り・道具・場面・特技）に見出しを付けて表示する。
+      // 「動物&道具」のような複合タイプは、先頭のタイプ（動物）にまとめる。
+      const typeOf = (c) => (c ? c._types[0] : "不明");
+      let lastType = null;
+      const rows = es.map(({ no, n, c }) => {
+        let head = "";
+        if (z.key === "main" && typeOf(c) !== lastType) {
+          lastType = typeOf(c);
+          const sum = es.filter((e) => typeOf(e.c) === lastType).reduce((a, e) => a + e.n, 0);
+          head = `<h3 class="tgroup">${esc(lastType)}<span>${sum}枚</span></h3>`;
+        }
+        const bad = v.misplaced.has(z.key + no) || (c && v.over.has(c.name));
+        const sub = c ? `${esc(c.no)}・${esc(c.type)}${c.cost !== null ? `・コスト${c.cost}` : ""}` : "カードデータにありません";
+        const label = esc(c ? c.name : no);
+        return `${head}<div class="drow${bad ? " bad" : ""}">
+          <span class="q">${n}</span>
+          <span class="dn">${label}<small>${sub}</small></span>
+          <button type="button" data-zone="${z.key}" data-no="${esc(no)}" data-d="-1" aria-label="${label}を1枚減らす">−</button>
+          ${c ? `<button type="button" data-zone="${z.key}" data-no="${esc(no)}" data-d="1" aria-label="${label}を1枚増やす">＋</button>` : ""}
+        </div>`;
+      }).join("");
+      return `<div class="zone">
+        <h2>${z.label}<span class="pill ${v.ok[z.key] ? "ok" : "ng"}">${v.counts[z.key]}枚</span><span class="rule">${z.rule}</span></h2>
+        ${rows || '<p class="empty">まだカードがありません。</p>'}
+      </div>`;
+    }).join("");
+  }
+  function renderSummary(v) {
+    $("pills").innerHTML = ZONES.map((z) =>
+      `<span class="pill ${v.ok[z.key] ? "ok" : "ng"}">${z.short} ${v.counts[z.key]}枚<span class="rule">（${z.rule}）</span></span>`).join("") +
+      (v.ok.all ? '<span class="pill ok">構築ルール OK</span>' : "");
+    $("issues").innerHTML = v.issues.map((i) => `<li class="${i.level}">${esc(i.text)}</li>`).join("");
+    $("tab-deck").textContent = `デッキ内容（${ZONES.map((z) => v.counts[z.key]).join("/")}）`;
+  }
+  // 検索結果の各カードに、デッキに入っている同名カードの合計枚数を表示する
+  function renderHave(v) {
+    document.querySelectorAll(".have").forEach((el) => {
+      const n = v.totals.get(el.dataset.name) || 0;
+      const basic = el.dataset.basic === "1";
+      el.textContent = n ? (basic ? `デッキ内 ${n}枚` : `同名 ${n}/${NAME_MAX}枚`) : "";
+      el.classList.toggle("over", !basic && n > NAME_MAX);
+    });
+  }
+  function renderSelect() {
+    $("deck-select").innerHTML = store.decks.map((d) =>
+      `<option value="${esc(d.id)}"${d.id === store.current ? " selected" : ""}>${esc(deckLabel(d))}（${ZONES.map((z) => zoneCount(d, z.key)).join("/")}）</option>`).join("");
+  }
+  function refresh() {
+    const v = validate(deck());
+    renderSelect();
+    renderSummary(v);
+    renderDeck(v);
+    renderHave(v);
+  }
+  function switchDeck() {
+    $("deck-name").value = deck().name;
+    refresh();
+  }
+
+  let toastTimer;
+  function toast(text) {
+    $("toast").textContent = text;
+    $("toast").classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => $("toast").classList.remove("show"), 2200);
+  }
+
+  // 保存データをブラウザに自動で消されにくくする（対応ブラウザのみ。確認が出る場合があるので操作時に1回だけ頼む）
+  let persistAsked = false;
+  function askPersist() {
+    if (persistAsked) return;
+    persistAsked = true;
+    try { navigator.storage?.persist?.().catch(() => {}); } catch (e) {}
+  }
+
+  function change(zone, no, delta) {
+    askPersist();
+    const d = deck();
+    const n = Math.min((d[zone][no] || 0) + delta, 99);
+    if (n > 0) d[zone][no] = n; else delete d[zone][no];
+    d.updated = Date.now();
+    save();
+    refresh();
+    return n;
+  }
+
+  // ---- デッキの管理 ----
+  $("deck-select").addEventListener("change", (e) => { store.current = e.target.value; save(); switchDeck(); });
+  $("deck-name").addEventListener("input", (e) => { deck().name = e.target.value; deck().updated = Date.now(); save(); renderSelect(); });
+  $("new-btn").addEventListener("click", () => {
+    const d = emptyDeck(`新しいデッキ${store.decks.length + 1}`);
+    store.decks.push(d); store.current = d.id; save(); switchDeck();
+    $("deck-name").focus(); $("deck-name").select();
+  });
+  $("copy-btn").addEventListener("click", () => {
+    const src = deck();
+    const d = cleanDeck({ ...JSON.parse(JSON.stringify(src)), id: newId(), name: (deckLabel(src) + "のコピー").slice(0, 30), updated: Date.now() });
+    store.decks.push(d); store.current = d.id; save(); switchDeck();
+    toast(`「${deckLabel(src)}」を複製しました。`);
+  });
+  $("del-btn").addEventListener("click", () => {
+    const d = deck();
+    if (!confirm(`デッキ「${deckLabel(d)}」を削除します。元に戻せません。よろしいですか？`)) return;
+    store.decks = store.decks.filter((x) => x.id !== d.id);
+    if (!store.decks.length) store.decks.push(emptyDeck("新しいデッキ"));
+    store.current = store.decks[0].id; save(); switchDeck();
+  });
+  // ---- バックアップ（全デッキをJSONファイルに書き出す／読み込む） ----
+  const FILE_APP = "acg-deck-builder";
+  $("export-btn").addEventListener("click", () => {
+    const data = {
+      app: FILE_APP, version: 1, exported: new Date().toISOString(),
+      decks: store.decks.map((d) => ({ name: d.name, main: d.main, terr: d.terr, side: d.side, updated: d.updated })),
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 1)], { type: "application/json" }));
+    const a = document.createElement("a");
+    const t = new Date(), p2 = (n) => String(n).padStart(2, "0");
+    a.href = url;
+    a.download = `acg-decks-${t.getFullYear()}${p2(t.getMonth() + 1)}${p2(t.getDate())}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast(`${store.decks.length}件のデッキを書き出しました。`);
+  });
+  $("import-btn").addEventListener("click", () => $("import-file").click());
+  $("import-file").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    let list;
+    try {
+      if (file.size > 2 * 1024 * 1024) throw new Error("too large");
+      const data = JSON.parse(await file.text());
+      list = data && data.app === FILE_APP && Array.isArray(data.decks) ? data.decks : null;
+    } catch (err) { list = null; }
+    if (!list) { alert("このファイルは読み込めませんでした。このページで書き出したデッキのファイル（.json）を選んでください。"); return; }
+    // 今あるデッキは消さずに追加する。名前も中身も同じデッキは重複させない
+    let added = 0, skipped = 0, last = null;
+    list.slice(0, 200).forEach((raw) => {
+      if (!raw || typeof raw !== "object") return;
+      const d = cleanDeck({ ...raw, id: newId() });
+      if (store.decks.some((x) => sameDeck(x, d))) { skipped++; return; }
+      store.decks.push(d); last = d; added++;
+    });
+    // 作りかけの空デッキだけがあった場合は、読み込んだデッキに置き換える
+    if (added && store.decks.length === added + 1 && !ZONES.some((z) => zoneCount(store.decks[0], z.key))) store.decks.shift();
+    if (last) store.current = last.id;
+    askPersist();
+    save();
+    switchDeck();
+    toast(added ? `${added}件のデッキを読み込みました${skipped ? `（${skipped}件は保存済みのため省略）` : ""}。` : "読み込めるデッキはありませんでした（すべて保存済みです）。");
+  });
+
+  $("deck-pane").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-d]");
+    if (b) change(b.dataset.zone, b.dataset.no, Number(b.dataset.d));
+  });
+
+  // ---- スマホ用のタブ切替 ----
+  function setTab(tab) {
+    document.body.dataset.tab = tab;
+    ["search", "deck"].forEach((t) => $("tab-" + t).setAttribute("aria-selected", String(t === tab)));
+  }
+  document.querySelector(".tabs").addEventListener("click", (e) => { const t = e.target.closest("button")?.dataset.tab; if (t) setTab(t); });
+  setTab("search");
+
+  // ---- カードを探す ----
+  const uniq = (arr) => [...new Set(arr)];
+  const countBy = (arr) => arr.reduce((m, k) => (m[k] = (m[k] || 0) + 1, m), {});
+  const chip = (group, value, label) =>
+    `<label class="chip"><input type="checkbox" name="${group}" value="${esc(value)}"><span>${esc(label)}</span></label>`;
+  const typeCount = countBy(CARDS.flatMap((c) => c._types));
+  $("type-chips").innerHTML = Object.keys(typeCount)
+    .sort((a, b) => TYPE_ORDER.indexOf(a) - TYPE_ORDER.indexOf(b))
+    .map((t) => chip("type", t, t)).join("");
+  $("cond-chips").innerHTML = ["平", "山", "水", "森", "夜", "無"].map((s) => chip("cond", s, s)).join("");
+  $("tribe-list").innerHTML = uniq(CARDS.map((c) => c.tribe).filter(Boolean))
+    .sort((a, b) => a.localeCompare(b, "ja"))
+    .map((t) => `<option value="${esc(t)}">`).join("");
+  const sets = uniq(CARDS.map((c) => c.set + "\t" + c.setName)).map((s) => s.split("\t"));
+  $("set-chips").innerHTML = sets.map(([code, name]) => chip("set", code, `${name}（${code}）`)).join("");
+
+  const checked = (name) => [...document.querySelectorAll(`input[name=${name}]:checked`)].map((i) => i.value);
+  const numVal = (id) => { const v = $(id).value.trim(); return v === "" ? null : Number(v); };
+  const inRange = (v, min, max) => {
+    if (min === null && max === null) return true;
+    if (typeof v !== "number") return false;
+    return (min === null || v >= min) && (max === null || v <= max);
+  };
+  const terms = (s) => norm(s).split(/[\s　]+/).filter(Boolean);
+  function filter() {
+    const qName = terms($("q-name").value);
+    const qEffect = terms($("q-effect").value);
+    const condSel = checked("cond");
+    const typeSel = checked("type");
+    const tribe = norm($("q-tribe").value.trim());
+    const setSel = checked("set");
+    const cost = [numVal("cost-min"), numVal("cost-max")];
+    return CARDS.filter((c) =>
+      qName.every((t) => c._name.includes(t)) &&
+      qEffect.every((t) => c._effect.includes(t)) &&
+      condSel.every((s) => c.cond.includes(s)) &&
+      (typeSel.length === 0 || typeSel.some((t) => c._types.includes(t))) &&
+      (!tribe || norm(c.tribe).includes(tribe)) &&
+      (setSel.length === 0 || setSel.includes(c.set)) &&
+      inRange(c.cost, ...cost)
+    );
+  }
+
+  const renderEffect = (text) => esc(text).replace(/《([^《》]*?)》/g, '<span class="kw">《$1》</span>');
+  function cardHtml(c) {
+    const stats = [];
+    if (c.cost !== null) stats.push(`<span>［コスト：${c.cost}］</span>`);
+    if (c.cond) stats.push(`<span>［条件：${esc(c.cond)}］</span>`);
+    stats.push(`<span>［タイプ：${esc(c.type || "−")}］</span>`);
+    if (c.tribe) stats.push(`<span>［種属：${esc(c.tribe)}］</span>`);
+    if (c.atk !== null || c.def !== null)
+      stats.push(`<span>［<span class="atk">ATK ${c.atk ?? "−"}</span>／<span class="def">DEF ${c.def ?? "−"}</span>］</span>`);
+    // 入れられるデッキのボタンだけを出す（領土カードは領土/予備、それ以外は基礎/予備）
+    const buttons = ZONES.filter((z) => allowed(c, z.key)).map((z) =>
+      `<button type="button" data-zone="${z.key}" data-no="${esc(c.no)}" aria-label="${esc(c.name)}を${z.label}に1枚追加">＋${z.short}</button>`).join("");
+    return `<article class="card">
+      <div class="top">
+        <h3 class="name">${esc(c.name)} <span class="no">（${esc(c.no)}）</span></h3>
+        <div class="add"><span class="have" data-name="${esc(c.name)}" data-basic="${c._basic ? 1 : 0}"></span>${buttons}</div>
+      </div>
+      <div class="stats">${stats.join("")}</div>
+      <details class="eff">
+        <summary>効果・収録を見る</summary>
+        <div class="effect">${renderEffect(c.effect) || '<span style="color:var(--muted)">（効果なし）</span>'}</div>
+        <div class="stats"><span>収録: ${esc(c.setName)}</span>
+          <a href="${OFFICIAL}img/${encodeURIComponent(c.img)}" target="_blank" rel="noopener">画像（公式）↗</a></div>
+      </details>
+    </article>`;
+  }
+
+  let current = [], shown = 0;
+  function renderMore() {
+    const next = current.slice(shown, shown + PAGE);
+    $("results").insertAdjacentHTML("beforeend", next.map(cardHtml).join(""));
+    shown += next.length;
+    $("more").hidden = shown >= current.length;
+    $("more").textContent = `さらに表示（残り ${current.length - shown} 件）`;
+    renderHave(validate(deck()));
+  }
+  function update() {
+    current = filter();
+    shown = 0;
+    $("results").innerHTML = current.length ? "" : '<p>該当するカードはありません。</p>';
+    $("count").textContent = `${current.length} 件 / 全 ${CARDS.length} 件`;
+    renderMore();
+  }
+  let timer;
+  const debounced = () => { clearTimeout(timer); timer = setTimeout(update, 120); };
+  $("form").addEventListener("input", debounced);
+  $("form").addEventListener("change", debounced);
+  $("more").addEventListener("click", renderMore);
+  $("clear-btn").addEventListener("click", () => { $("form").reset(); update(); });
+  $("results").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-zone]");
+    if (!b) return;
+    const c = BY_NO.get(b.dataset.no);
+    const zone = ZONES.find((z) => z.key === b.dataset.zone);
+    const n = change(zone.key, c.no, 1);
+    toast(`「${c.name}」を${zone.label}に追加（${n}枚）`);
+  });
+
+  // ---- QRコード ----
+  // 作成できなかった場合（データが多すぎる場合）は null を返す
+  function makeQr(text) {
+    try { const qr = qrcode(0, "L"); qr.addData(text); qr.make(); return qr; }
+    catch (e) { return null; }
+  }
+  function drawQr(ctx, qr, x, y, cell) {
+    const n = qr.getModuleCount(), quiet = 4;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(x, y, (n + quiet * 2) * cell, (n + quiet * 2) * cell);
+    ctx.fillStyle = "#000";
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++)
+      if (qr.isDark(r, c)) ctx.fillRect(x + (c + quiet) * cell, y + (r + quiet) * cell, cell, cell);
+  }
+
+  // ---- デッキリスト画像（カード名の一覧。カード画像は使わない） ----
+  const FONT = '"Hiragino Sans", "Yu Gothic UI", Meiryo, system-ui, sans-serif';
+  function deckImage(d, qr) {
+    const v = validate(d);
+    const W = 1200, P = 40, COLS = 3, GAP = 28, LH = 30, HEAD = 240;
+    const colW = (W - P * 2 - GAP * (COLS - 1)) / COLS;
+
+    // 行のリストを作り、見出しが段の最後に取り残されないように3段へ流し込む
+    const lines = [];
+    ZONES.forEach((z) => {
+      const es = entries(d, z.key);
+      if (lines.length) lines.push({ kind: "gap" });
+      lines.push({ kind: "zone", text: `${z.label}（${v.counts[z.key]}枚）` });
+      if (!es.length) lines.push({ kind: "none", text: "（なし）" });
+      let lastType = null;
+      es.forEach(({ no, n, c }) => {
+        const type = c ? c._types[0] : "不明";
+        if (z.key === "main" && type !== lastType) {
+          const sum = es.filter((e) => (e.c ? e.c._types[0] : "不明") === type).reduce((a, e) => a + e.n, 0);
+          lines.push({ kind: "type", text: `${type}（${sum}枚）` });
+          lastType = type;
+        }
+        lines.push({ kind: "item", n, text: c ? c.name : no, no: c ? c.no : "" });
+      });
+    });
+    const isHead = (l) => l.kind === "zone" || l.kind === "type";
+    const flow = (per) => {
+      const cols = [[]];
+      lines.forEach((l, i) => {
+        let col = cols[cols.length - 1];
+        const full = col.length >= per;
+        const orphan = isHead(l) && col.length >= per - 1 && i < lines.length - 1;
+        if (full || orphan) { col = []; cols.push(col); }
+        if (l.kind === "gap" && !col.length) return;
+        col.push(l);
+      });
+      return cols;
+    };
+    let per = Math.max(8, Math.ceil(lines.length / COLS)), cols = flow(per);
+    while (cols.length > COLS) cols = flow(++per);
+    const rows = Math.max(...cols.map((c) => c.length));
+
+    const H = P + HEAD + rows * LH + 70;
+    const cv = document.createElement("canvas");
+    cv.width = W; cv.height = H;
+    const ctx = cv.getContext("2d");
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = "alphabetic";
+    // 幅に収まるまで文字を小さくし、それでも収まらなければ末尾を省略する
+    const fit = (text, maxW, size, weight, min) => {
+      let s = size;
+      for (;;) { ctx.font = `${weight} ${s}px ${FONT}`; if (ctx.measureText(text).width <= maxW || s <= min) break; s--; }
+      let t = text;
+      while (t.length > 1 && ctx.measureText(t === text ? t : t + "…").width > maxW) t = t.slice(0, -1);
+      return t === text ? t : t + "…";
+    };
+
+    const qrSize = 214, qrCell = qr ? Math.max(1, Math.floor(qrSize / (qr.getModuleCount() + 8))) : 0;
+    const headW = W - P * 2 - (qr ? qrSize + 24 : 0);
+    ctx.fillStyle = "#1f2328";
+    ctx.fillText(fit(deckLabel(d), headW, 40, "700", 22), P, P + 44);
+    ctx.fillStyle = "#666c75";
+    ctx.font = `400 20px ${FONT}`;
+    ctx.fillText("アニマルカードゲーム デッキリスト", P, P + 82);
+    ctx.fillStyle = "#1f2328";
+    ctx.font = `600 24px ${FONT}`;
+    ctx.fillText(ZONES.map((z) => `${z.short} ${v.counts[z.key]}枚`).join("　／　"), P, P + 124);
+    ctx.font = `600 18px ${FONT}`;
+    ctx.fillStyle = v.ok.all ? "#2f6f5e" : "#c0392b";
+    ctx.fillText(v.ok.all ? "構築ルール OK" : "※ 構築ルールを満たしていません", P, P + 158);
+    if (qr) {
+      const side = (qr.getModuleCount() + 8) * qrCell;
+      drawQr(ctx, qr, W - P - side, P - 6, qrCell);
+      ctx.fillStyle = "#666c75"; ctx.font = `400 13px ${FONT}`; ctx.textAlign = "right";
+      ctx.fillText("QRコードでデッキを読み込めます", W - P, P - 6 + side + 14);
+      ctx.textAlign = "left";
+    }
+    ctx.fillStyle = "#d9dbd6"; ctx.fillRect(P, P + HEAD - 14, W - P * 2, 2);
+
+    cols.forEach((col, ci) => {
+      const x = P + ci * (colW + GAP);
+      col.forEach((l, ri) => {
+        const y = P + HEAD + ri * LH + 22;
+        if (l.kind === "zone") {
+          ctx.fillStyle = "#2f6f5e"; ctx.fillRect(x, y - 21, colW, 28);
+          ctx.fillStyle = "#ffffff"; ctx.font = `700 18px ${FONT}`; ctx.fillText(l.text, x + 10, y);
+        } else if (l.kind === "type") {
+          ctx.fillStyle = "#2f6f5e"; ctx.font = `700 16px ${FONT}`; ctx.fillText(l.text, x + 2, y);
+          ctx.fillStyle = "#d9dbd6"; ctx.fillRect(x, y + 6, colW, 1);
+        } else if (l.kind === "none") {
+          ctx.fillStyle = "#666c75"; ctx.font = `400 17px ${FONT}`; ctx.fillText(l.text, x + 2, y);
+        } else if (l.kind === "item") {
+          ctx.fillStyle = "#1f2328"; ctx.font = `700 19px ${FONT}`; ctx.textAlign = "right";
+          ctx.fillText(String(l.n), x + 30, y); ctx.textAlign = "left";
+          ctx.font = `400 12px ${FONT}`;
+          const noW = l.no ? ctx.measureText(l.no).width + 8 : 0;
+          ctx.fillStyle = "#666c75"; ctx.textAlign = "right"; ctx.fillText(l.no, x + colW, y); ctx.textAlign = "left";
+          ctx.fillStyle = "#1f2328";
+          ctx.fillText(fit(l.text, colW - 42 - noW, 19, "400", 12), x + 42, y);
+        }
+      });
+    });
+
+    ctx.fillStyle = "#666c75"; ctx.font = `400 15px ${FONT}`;
+    ctx.fillText("ACGカード検索（非公式ファンサイト）で作成　" + PUBLIC_URL, P, H - 28);
+    return cv;
+  }
+
+  // ---- 共有ダイアログ ----
+  // OS標準の共有メニュー（主にスマホ）。使えるブラウザでだけボタンを出す
+  const canShareFiles = (() => {
+    try { return !!navigator.canShare && navigator.canShare({ files: [new File([""], "a.png", { type: "image/png" })] }); }
+    catch (e) { return false; }
+  })();
+  $("url-share").hidden = !navigator.share;
+  $("img-share").hidden = $("img-hint").hidden = !canShareFiles;
+  const doShare = async (data) => {
+    try { await navigator.share(data); }
+    catch (e) { if (e.name !== "AbortError") toast("共有できませんでした。保存またはコピーをお試しください。"); }
+  };
+  let imgUrl = null, imgFile = null;
+  $("share-btn").addEventListener("click", () => {
+    const d = deck();
+    const url = shareUrl(d);
+    const qr = makeQr(url);
+    const qc = $("qr");
+    qc.hidden = !qr; $("qr-error").hidden = !!qr;
+    if (qr) {
+      const cell = 4, side = (qr.getModuleCount() + 8) * cell;
+      qc.width = qc.height = side;
+      drawQr(qc.getContext("2d"), qr, 0, 0, cell);
+    }
+    $("share-url").value = url;
+    deckImage(d, qr).toBlob((blob) => {
+      if (imgUrl) URL.revokeObjectURL(imgUrl);
+      imgUrl = URL.createObjectURL(blob);
+      imgFile = new File([blob], "deck.png", { type: "image/png" });
+      $("share-img").src = imgUrl;
+      $("img-save").href = imgUrl;
+      $("img-save").download = (deckLabel(d).replace(/[\\/:*?"<>|]/g, "_") || "deck") + ".png";
+    }, "image/png");
+    $("share").showModal();
+  });
+  $("share-close").addEventListener("click", () => $("share").close());
+  $("share").addEventListener("click", (e) => { if (e.target === $("share")) $("share").close(); });
+  $("url-copy").addEventListener("click", async () => { await copyText($("share-url").value); toast("URLをコピーしました。"); });
+  $("url-share").addEventListener("click", () => doShare({ title: deckLabel(deck()), text: `${deckLabel(deck())}（アニマルカードゲームのデッキ）`, url: $("share-url").value }));
+  $("img-share").addEventListener("click", () => { if (imgFile) doShare({ files: [imgFile], title: deckLabel(deck()) }); });
+
+  // 上部に固定した枚数表示の高さに合わせて、PCのデッキ内容欄の固定位置をずらす
+  new ResizeObserver(([e]) => document.documentElement.style.setProperty("--sum-h", e.target.offsetHeight + "px"))
+    .observe(document.querySelector(".summary"));
+
+  // ---- 端末に合わせた案内 ----
+  $("inapp-warn").hidden = !IN_APP;
+  $("inapp-copy").addEventListener("click", async () => { await copyText(location.href); toast("URLをコピーしました。Safari や Chrome に貼り付けて開いてください。"); });
+  $("ios-hint").hidden = !IOS || STANDALONE || IN_APP;
+
+  // ---- 起動 ----
+  load();
+  const imported = importFromHash();
+  save();
+  switchDeck();
+  update();
+  if (imported) { setTab("deck"); toast(imported); }
+  // 別のタブで保存された変更を取り込む（古い内容で上書きしないように）
+  window.addEventListener("storage", (e) => {
+    if (e.key !== STORE_KEY) return;
+    const cur = store.current;
+    store = { decks: [], current: cur };
+    load();
+    if (store.decks.some((d) => d.id === cur)) store.current = cur;
+    switchDeck();
+  });
+})();
+</script>
+</body>
+</html>

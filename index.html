@@ -134,6 +134,9 @@
   footer .wrap { padding-top: 16px; padding-bottom: 24px; }
   footer ul { margin: 6px 0; padding-left: 1.3em; }
   .theme-btn { margin-left: auto; font-size: 12px; padding: 2px 10px; }
+  .nav { display: flex; gap: 4px; font-size: 14px; }
+  .nav a { padding: 2px 10px; border-radius: 999px; text-decoration: none; }
+  .nav a[aria-current] { background: var(--accent); color: var(--panel); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -141,6 +144,10 @@
   <div class="wrap">
     <h1>ACGカード検索</h1>
     <span class="badge">非公式ファンサイト</span>
+    <nav class="nav" aria-label="ページ切替">
+      <a href="index.html" aria-current="page">カード検索</a>
+      <a href="deck.html">デッキ作成</a>
+    </nav>
     <button type="button" class="theme-btn" id="themeBtn">表示: 自動</button>
   </div>
 </header>

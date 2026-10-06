@@ -3,4 +3,6 @@
 !/.gitignore
 !/index.html
 !/cards.js
+!/deck.html
+!/qrcode.js
 !/ogp.png
